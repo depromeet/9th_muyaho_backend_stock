@@ -1,5 +1,6 @@
-from flask import Flask, request, abort, jsonify
+from flask import Flask, request, abort, jsonify, Response
 import FinanceDataReader as fdr
+from pykrx import stock
 from datetime import date, timedelta
 
 app = Flask(__name__)
@@ -15,9 +16,21 @@ def getDomesticCode():
     type = request.args.get('type')
     if type not in ['KRX', 'NASDAQ']:
         abort(400, 'Bad Type')
+    if type == 'KRX':
+        return jsonify(getKRXCodes())
+    df = fdr.StockListing('NASDAQ')[['Symbol', 'Name']]
+    return Response(df.to_json(orient='records'), mimetype='application/json')
 
-    df = fdr.StockListing(type)[['Symbol', 'Name']]
-    return df.to_json(orient='records')
+
+def getKRXCodes():
+    result = []
+    for ticker in stock.get_market_ticker_list(market='ALL'):
+        name = stock.get_market_ticker_name(ticker)
+        result.append({
+            "Symbol": ticker,
+            "Name": name
+        })
+    return result
 
 
 @app.route('/api/v1/stock/price')
