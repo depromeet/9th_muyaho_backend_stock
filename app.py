@@ -41,6 +41,8 @@ def getPrice():
     for code in codes:
         today = date.today()
         day = today - timedelta(days=14)
+        if fdr.DataReader(code, day).empty:
+            abort(404, 'Not Found Stock')
         df = fdr.DataReader(code, day)[['Close']]
         result.append({
             "code": code,
