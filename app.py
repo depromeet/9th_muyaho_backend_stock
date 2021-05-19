@@ -40,14 +40,11 @@ def getPrice():
 
     for code in codes:
         today = date.today()
-        week = today.weekday()
-        if week >= 5:
-            today -= timedelta(days=week - 4)
-        df = fdr.DataReader(code, today)[['Close']]
-
+        day = today - timedelta(days=14)
+        df = fdr.DataReader(code, day)[['Close']]
         result.append({
             "code": code,
-            "price": str(df.values[0][0])
+            "price": str(df.iloc[-1][0])
         })
     return jsonify(result)
 
