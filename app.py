@@ -44,7 +44,7 @@ def getCurrentStockPrice():
     for code in codes:
         current_price = fetchCurrentStockPrice(code, day)
         if current_price:
-            result.append(fetchCurrentStockPrice(code, day))
+            result.append(current_price)
     return jsonify(result)
 
 
@@ -53,9 +53,10 @@ def distinctAndSplit(codes):
 
 
 def fetchCurrentStockPrice(code, day):
-    if fdr.DataReader(code, day).empty:
+    stock = fdr.DataReader(code, day)
+    if stock.empty:
         return False
-    df = fdr.DataReader(code, day)[['Close']]
+    df = stock[['Close']]
     return {
         "code": code,
         "price": str(df.iloc[-1][0])
@@ -63,4 +64,4 @@ def fetchCurrentStockPrice(code, day):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
