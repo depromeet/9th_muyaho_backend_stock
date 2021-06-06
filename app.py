@@ -2,6 +2,7 @@ from flask import Flask, request, abort, jsonify, Response
 import FinanceDataReader as fdr
 from pykrx import stock
 from datetime import date, timedelta
+import logging
 
 app = Flask(__name__)
 
@@ -58,13 +59,20 @@ def distinctAndSplit(codes):
 
 
 def fetchCurrentStockPrice(code, day):
-    current_stock_price = fdr.DataReader(code, day)
-    if current_stock_price.empty:
-        return False
-    return {
-        "code": code,
-        "price": str(current_stock_price[['Close']].iloc[-1][0])
-    }
+    try:
+        current_stock_price = fdr.DataReader(code, day)
+        if current_stock_price.empty:
+            return False
+        return {
+            "code": code,
+            "price": str(current_stock_price[['Close']].iloc[-1][0])
+        }
+    except Exception as e:
+        logging.error("주식 현재가를 불러오는 중 에러가 발생하였습니다 code: {0} error: {1}".format(code, e))
+        return {
+            "code": code,
+            "price": -1
+        }
 
 
 if __name__ == '__main__':
