@@ -13,7 +13,7 @@ def ping():
     return 'pong'
 
 
-allowed_stock_type = ['KRX', 'NASDAQ']
+allowed_stock_type = ['KRX', 'NASDAQ', 'NYSE']
 
 
 # 상장중인 종목 정보를 불러오는 API (국내 주식, 해외 주식)
@@ -26,7 +26,7 @@ def getListedStockCodes():
     if type == 'KRX':
         return jsonify(getKrxCodes())
 
-    df = fdr.StockListing('NASDAQ')[['Symbol', 'Name']]
+    df = fdr.StockListing(type)[['Symbol', 'Name']]
     return Response(df.to_json(orient='records'), mimetype='application/json')
 
 
