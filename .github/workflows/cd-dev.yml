@@ -46,7 +46,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition-dev.json
-          container-name: muyaho-stock-dev
+          container-name: muyaho-stock
           image: ${{ steps.build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
