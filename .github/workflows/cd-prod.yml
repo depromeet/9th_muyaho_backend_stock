@@ -1,9 +1,9 @@
-name: CD Development Server
+name: CD Production Server
 
 on:
   push:
     branches:
-      - develop
+      - main
 jobs:
   build:
     runs-on: ubuntu-18.04
@@ -14,8 +14,10 @@ jobs:
       - name: Versioning
         id: docker-image-version
         run: |
-            VERSION=`cat ./version.txt`-${{ github.run_id }}
-            echo "::set-output name=version::$VERSION"
+          VERSION=`cat ./version.txt`
+          GIT_COMMIT_MSG=`git show -s`
+          echo "::set-output name=version::$VERSION"
+          echo "::set-output name=git-commit-msg::$GIT_COMMIT_MSG"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,8 +47,8 @@ jobs:
         id: render-web-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition-dev.json
-          container-name: muyaho-stock-dev
+          task-definition: task-definition-prod.json
+          container-name: muyaho-stock-prod
           image: ${{ steps.build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
@@ -54,5 +56,18 @@ jobs:
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
           cluster: muyaho-api
-          service: muyaho-stock-dev
+          service: muyaho-stock-prod
           wait-for-service-stability: true
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        with:
+          tag_name: ${{ steps.docker-image-version.outputs.version }}
+          release_name: Release ${{ steps.docker-image-version.outputs.version }}
+          body: ${{ steps.docker-image-version.outputs.git-commit-msg }}
+          draft: false
+          prerelease: false
+
