@@ -1,7 +1,7 @@
 # 9th_muyaho_backend (영차)
 > 주식 실시간 조회 서버
 
-![Generic badge](https://img.shields.io/badge/version-0.0.7-orange.svg)
+![Generic badge](https://img.shields.io/badge/version-1.0.0-orange.svg)
 
 ## Introduction
 ### 주식 및 비트코인 투자 현황 통합 관리 앱 
