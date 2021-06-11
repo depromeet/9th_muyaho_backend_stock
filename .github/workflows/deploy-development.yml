@@ -1,9 +1,9 @@
-name: CD Production Server
+name: 개발환경 주식 서버 배포
 
 on:
   push:
     branches:
-      - main
+      - develop
 jobs:
   build:
     runs-on: ubuntu-18.04
@@ -14,10 +14,8 @@ jobs:
       - name: Versioning
         id: docker-image-version
         run: |
-          VERSION=`cat ./version.txt`
-          GIT_COMMIT_MSG=`git show -s`
-          echo "::set-output name=version::$VERSION"
-          echo "::set-output name=git-commit-msg::$GIT_COMMIT_MSG"
+            VERSION=`cat ./version.txt`-${{ github.run_id }}
+            echo "::set-output name=version::$VERSION"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -43,31 +41,24 @@ jobs:
           docker push $DOCKER_REGISTRY/$DOCKER_REPOSITORY:latest
           echo "::set-output name=image::$DOCKER_REGISTRY/$DOCKER_REPOSITORY:$IMAGE_TAG"
 
+      - name: Download muyaho-stock-dev task definition
+        id: download-task-definition
+        run: |
+          aws ecs describe-task-definition --task-definition muyaho-stock-task --query taskDefinition > task-definition-dev.json
+          echo "::set-output name=task-definition::$GITHUB_WORKSPACE/task-definition-dev.json"
+
       - name: Render Amazon ECS task definition
-        id: render-web-container
+        id: render-stock-dev-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition-prod.json
-          container-name: muyaho-stock-prod
+          task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
+          container-name: muyaho-stock
           image: ${{ steps.build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          task-definition: ${{ steps.render-stock-dev-container.outputs.task-definition }}
           cluster: muyaho-api
-          service: muyaho-stock-prod
+          service: muyaho-stock-dev
           wait-for-service-stability: true
-
-      - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-        with:
-          tag_name: ${{ steps.docker-image-version.outputs.version }}
-          release_name: Release ${{ steps.docker-image-version.outputs.version }}
-          body: ${{ steps.docker-image-version.outputs.git-commit-msg }}
-          draft: false
-          prerelease: false
-
