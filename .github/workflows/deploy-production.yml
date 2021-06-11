@@ -47,7 +47,7 @@ jobs:
         id: download-task-definition
         run: |
           aws ecs describe-task-definition --task-definition muyaho-stock-prod-task --query taskDefinition > task-definition-prod.json
-          echo "::set-output name=task-definition::$GITHUB_WORKSPACE/task-definition-dev.json"
+          echo "::set-output name=task-definition::$GITHUB_WORKSPACE/task-definition-prod.json"
 
       - name: Render Amazon ECS task definition
         id: render-stock-prod-container
