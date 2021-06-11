@@ -1,4 +1,4 @@
-name: CD Development Server
+name: 개발환경 주식 서버 배포
 
 on:
   push:
