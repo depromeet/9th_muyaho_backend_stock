@@ -43,18 +43,24 @@ jobs:
           docker push $DOCKER_REGISTRY/$DOCKER_REPOSITORY:latest
           echo "::set-output name=image::$DOCKER_REGISTRY/$DOCKER_REPOSITORY:$IMAGE_TAG"
 
+      - name: Download muyaho-stock-dev task definition
+        id: download-task-definition
+        run: |
+          aws ecs describe-task-definition --task-definition muyaho-stock-prod-task --query taskDefinition > task-definition-prod.json
+          echo "::set-output name=task-definition::$GITHUB_WORKSPACE/task-definition-dev.json"
+
       - name: Render Amazon ECS task definition
-        id: render-web-container
+        id: render-stock-prod-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition-prod.json
+          task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
           container-name: muyaho-stock-prod
           image: ${{ steps.build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          task-definition: ${{ steps.render-stock-prod-container.outputs.task-definition }}
           cluster: muyaho-api
           service: muyaho-stock-prod
           wait-for-service-stability: true
